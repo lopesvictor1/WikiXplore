@@ -1,65 +1,84 @@
-# 📊 OSRS Wiki Stats
+# OSRS WikiXplore Project
 
-Este é um projeto em Python que acessa a **Old School RuneScape Wiki (OSRS Wiki)** via API para coletar estatísticas sobre o site, como o número total de artigos.
+This project is designed to crawl the Old School RuneScape (OSRS) Wiki, extract relationships between pages, and create a navigable graph of content. It also supports visualization using Neo4j or Obsidian.
 
-## 🚀 Funcionalidades
+## Features
 
-- Consulta a API oficial da OSRS Wiki (`api.php`).
-- Obtém estatísticas do site (ex.: total de artigos).
-- Mostra o resultado no terminal.
-- Usa um **User-Agent customizado** para respeitar as regras de acesso da Wiki.
+* Incremental crawling of OSRS Wiki articles using Playwright.
+* Resume-safe crawling with metadata and batching.
+* Handles corrupted JSON files and allows partial recovery.
+* Batch saving of visited pages to reduce memory overhead.
+* Graceful stop using Ctrl+C with automatic metadata persistence.
+* Supports graph visualization via Neo4j or Obsidian.
 
-## 📦 Requisitos
+## Files
 
-- Python 3.8 ou superior
-- Dependências (instale com `pip`):
+### `start.py`
+
+The main crawler that:
+
+* Incrementally crawls the wiki starting from a set of articles.
+* Tracks visited pages and pages to visit.
+* Saves the graph and metadata periodically.
+* Handles stop signals gracefully.
+
+### `create_obsidian_db.py`
+
+* Reads the JSON graph and generates Markdown (`.md`) files for each page.
+* Enables using Obsidian to visualize page relationships.
+* Each page is saved as a separate Markdown file in a `WikiXplore` folder.
+
+### `create_neo4j_cyper.py`
+
+* Converts the JSON graph into Neo4j Cypher statements.
+* Enables visualization and exploration of the graph in Neo4j.
+
+## Metadata Handling
+
+* JSON now includes both the graph data and metadata.
+* Metadata tracks:
+
+  * `visited`: list of already crawled pages.
+  * `to_visit`: list of pages queued for crawling.
+  * `last_save`: timestamp of the last save.
+  * `total_pages`: current count of pages in the graph.
+* Metadata is updated every `SAVE_INTERVAL` pages.
+
+## Important Notes
+
+* Large graphs (~300MB) are handled carefully with batching.
+* API pagination (`plcontinue`) is used to ensure all links from a page are captured.
+* Only namespace 0 (main articles) is crawled by default; full wiki crawling requires iterating over all namespaces.
+* Ctrl+C triggers a graceful stop that saves the current state.
+
+## Usage
+
+1. Start the crawler:
 
 ```bash
-pip install requests
+python3 start.py
 ```
 
-## Como executar
-
-Clone o repositório ou baixe o arquivo e rode:
+2. Generate Obsidian Markdown files:
 
 ```bash
-python3 teste.py
+python3 create_obsidian_db.py
 ```
 
-Saída esperada (exemplo):
+3. Generate Neo4j Cypher import file:
 
 ```bash
-Número total de artigos na OSRS Wiki: 246,789
+python3 create_neo4j_cyper.py
 ```
 
-## ⚠️ Importante sobre o uso da API
+4. Use Obsidian to explore pages or Neo4j to visualize the graph.
 
-A OSRS Wiki é hospedada pela Weird Gloop e utiliza MediaWiki API.
-Para evitar bloqueio do servidor:
+## Future Improvements
 
-Sempre use um User-Agent descritivo no seu script, incluindo:
+* Optional crawling of all namespaces to capture the full 492,126 pages.
+* Compressed JSON storage for faster I/O and reduced disk usage.
+* More advanced metadata reporting and batch recovery for very large datasets.
 
-- Nome do projeto
-- Versão
-- Forma de contato (e-mail ou link para GitHub/site)
+---
 
-Exemplo no código:
-```bash
-headers = {
-    "User-Agent": "OSRSWikiStatsBot/0.1 (https://github.com/seuusuario ou email@dominio.com)"
-}
-```
-- Não faça requisições em excesso (respeite limites de taxa, insira time.sleep() se necessário).
-- Confira a documentação oficial da API:
-    - MediaWiki API
-    - Sandbox da OSRS Wiki
-
-## 🔮 Próximos passos (idéias)
-
-- Salvar as estatísticas em um arquivo CSV para acompanhar evolução ao longo do tempo.
-- Coletar links entre artigos e montar grafos interativos (ex.: usando networkx + pyvis).
-- Criar dashboards com visualização de dados (Plotly, Dash, etc.).
-
-## 📜 Licença
-
-Este projeto é apenas para fins de aprendizado/estudo. Respeite sempre as regras de uso da OSRS Wiki e não abuse da API.
+This project is a work in progress, aiming to create a complete, navigable graph of the OSRS Wiki for analysis and visualization.
